@@ -2,14 +2,16 @@ import os
 import subprocess
 import sys
 
-# Tự động cài đặt thư viện nếu thiếu (Chiêu cuối để sửa lỗi ModuleNotFoundError)
+# Tự động kiểm tra và cài đặt thư viện nếu hệ thống chưa cài (Sửa lỗi ModuleNotFoundError)
 def install_dependencies():
-    try:
-        import langchain
-        import langchain_openai
-    except ImportError:
-        subprocess.check_call([sys.executable, "-m", "pip", "install", "langchain", "langchain-openai"])
+    dependencies = ["langchain", "langchain-openai", "streamlit"]
+    for package in dependencies:
+        try:
+            __import__(package.replace("-", "_"))
+        except ImportError:
+            subprocess.check_call([sys.executable, "-m", "pip", "install", package])
 
+# Chạy hàm cài đặt trước khi import các thư viện AI
 install_dependencies()
 
 import streamlit as st
@@ -51,7 +53,7 @@ with col2:
         else:
             with st.spinner("AI đang nhập vai phóng viên và viết bài..."):
                 try:
-                    # Thiết lập LLM (Sử dụng cú pháp mới nhất của LangChain)
+                    # Thiết lập LLM
                     llm = ChatOpenAI(model=model_choice, temperature=temperature, openai_api_key=api_key)
                     
                     template = """
@@ -71,7 +73,7 @@ with col2:
                     
                     prompt = PromptTemplate(template=template, input_variables=["style", "data"])
                     
-                    # Chạy AI bằng LCEL (Cú pháp hiện đại nhất)
+                    # Chạy AI
                     chain = prompt | llm
                     response = chain.invoke({"style": style, "data": raw_data})
                     article = response.content
